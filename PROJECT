@@ -1,0 +1,16 @@
+domain: barpilot.io
+layout:
+- go.kubebuilder.io/v3
+projectName: egress-proxy-operator
+repo: github.com/guilhem/egress-proxy-operator
+resources:
+- api:
+    crdVersion: v1
+    namespaced: true
+  controller: true
+  domain: barpilot.io
+  group: egress-proxy
+  kind: Request
+  path: github.com/guilhem/egress-proxy-operator/api/v1alpha1
+  version: v1alpha1
+version: "3"

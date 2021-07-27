@@ -1,0 +1,24 @@
+# permissions for end users to edit requests.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: request-editor-role
+rules:
+- apiGroups:
+  - egress-proxy.barpilot.io
+  resources:
+  - requests
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - egress-proxy.barpilot.io
+  resources:
+  - requests/status
+  verbs:
+  - get

@@ -1,0 +1,19 @@
+apiVersion: egress-proxy.barpilot.io/v1alpha1
+kind: Request
+metadata:
+  name: request-sample
+spec:
+  condition:
+    destinations:
+      - google.com
+      - google.fr
+    # urls:
+    #   matches:
+    #     - .*gif$
+    #   are:
+    #     - /toto
+    #   prefixes:
+    #     - /api
+  action:
+    # block: true
+    reroute: "https://www.qwant.com"

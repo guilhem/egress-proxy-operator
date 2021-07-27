@@ -1,0 +1,34 @@
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  creationTimestamp: null
+  name: manager-role
+rules:
+- apiGroups:
+  - egress-proxy.barpilot.io
+  resources:
+  - requests
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - egress-proxy.barpilot.io
+  resources:
+  - requests/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - egress-proxy.barpilot.io
+  resources:
+  - requests/status
+  verbs:
+  - get
+  - patch
+  - update

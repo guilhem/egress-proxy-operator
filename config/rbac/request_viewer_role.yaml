@@ -1,0 +1,20 @@
+# permissions for end users to view requests.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: request-viewer-role
+rules:
+- apiGroups:
+  - egress-proxy.barpilot.io
+  resources:
+  - requests
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - egress-proxy.barpilot.io
+  resources:
+  - requests/status
+  verbs:
+  - get
