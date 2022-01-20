@@ -30,13 +30,15 @@ type RequestSpec struct {
 }
 
 type Action struct {
-	Block   bool   `json:"block,omitempty"`
 	Reroute string `json:"reroute,omitempty"`
+	Block   bool   `json:"block,omitempty"`
 }
 
 type Condition struct {
 	DestinationHosts []string `json:"destinations,omitempty"`
 	Urls             URL      `json:"urls,omitempty"`
+
+	SourceEndpoints string `json:"SourceEndpointSlice,omitempty"`
 }
 
 type URL struct {

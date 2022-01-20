@@ -25,11 +25,18 @@ import (
 	"net/url"
 	"regexp"
 
+	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/types"
 	ctrl "sigs.k8s.io/controller-runtime"
+	"sigs.k8s.io/controller-runtime/pkg/builder"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/controller"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
+	"sigs.k8s.io/controller-runtime/pkg/handler"
 	"sigs.k8s.io/controller-runtime/pkg/log"
+	"sigs.k8s.io/controller-runtime/pkg/reconcile"
+	"sigs.k8s.io/controller-runtime/pkg/source"
 
 	"github.com/elazarl/goproxy"
 	egressproxyv1alpha1 "github.com/guilhem/egress-proxy-operator/api/v1alpha1"
@@ -41,8 +48,10 @@ type RequestReconciler struct {
 	Scheme      *runtime.Scheme
 	ReqHandlers []goproxy.ReqHandler
 	// Proxy *goproxy.ProxyHttpServer
+	ctrl controller.Controller
 
 	internalReqHandlers map[string]goproxy.ReqHandler
+	endpointsMap        map[string]map[string]map[string]types.NamespacedName
 }
 
 const Finalizer = "egress-proxy.barpilot.io/finalizer"
@@ -74,7 +83,7 @@ func (r *RequestReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 	} else {
 		// The object is being deleted
 		if controllerutil.ContainsFinalizer(proxyReq, Finalizer) {
-			// our finalizer is present, so lets handle any external dependency
+			// our finalizer is present, so lets handle any removing part
 			r.Remove(proxyReq)
 
 			// remove our finalizer from the list and update it.
@@ -88,7 +97,7 @@ func (r *RequestReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 		return ctrl.Result{}, nil
 	}
 
-	if err := r.Add(proxyReq); err != nil {
+	if err := r.Add(ctx, proxyReq); err != nil {
 		return ctrl.Result{}, fmt.Errorf("can't add proxy req: %w", err)
 	}
 
@@ -99,7 +108,7 @@ func (r *RequestReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 	return ctrl.Result{}, nil
 }
 
-func (r *RequestReconciler) Add(req *egressproxyv1alpha1.Request) error {
+func (r *RequestReconciler) Add(ctx context.Context, req *egressproxyv1alpha1.Request) error {
 	conds := make(map[string][]goproxy.ReqCondition)
 	for _, dst := range req.Spec.Condition.DestinationHosts {
 		conds["dst"] = append(conds["dst"], goproxy.DstHostIs(dst))
@@ -119,6 +128,25 @@ func (r *RequestReconciler) Add(req *egressproxyv1alpha1.Request) error {
 
 	for _, are := range req.Spec.Condition.Urls.Are {
 		conds["are"] = append(conds["are"], goproxy.UrlIs(are))
+	}
+
+	if req.Spec.Condition.SourceEndpoints != "" {
+		ep := new(corev1.Endpoints)
+		if err := r.Get(ctx, types.NamespacedName{Namespace: req.Namespace, Name: req.Spec.Condition.SourceEndpoints}, ep); err != nil {
+			return fmt.Errorf("can't get sourceEndpoint: %w", err)
+		}
+
+		var ips []string
+
+		for _, s := range ep.Subsets {
+			for _, addr := range s.Addresses {
+				ips = append(ips, addr.IP)
+			}
+		}
+
+		conds["ip"] = append(conds["ip"], goproxy.SrcIpIs(ips...))
+
+		r.endpointsMap[req.Namespace][req.Spec.Condition.SourceEndpoints][string(req.UID)] = types.NamespacedName{Name: req.Name, Namespace: req.Namespace}
 	}
 
 	reqhandler := goproxy.FuncReqHandler(func(r *http.Request, ctx *goproxy.ProxyCtx) (*http.Request, *http.Response) {
@@ -166,9 +194,22 @@ func (r *RequestReconciler) Add(req *egressproxyv1alpha1.Request) error {
 
 func (r *RequestReconciler) Remove(req *egressproxyv1alpha1.Request) {
 	k := string(req.UID)
+
+	// cleanup internalReqHandlers
 	if _, ok := r.internalReqHandlers[k]; ok {
 		delete(r.internalReqHandlers, string(req.UID))
 		r.refresh()
+	}
+
+	// cleanup endpointsMap
+	for _, m := range r.endpointsMap {
+		for _, n := range m {
+			for i := range n {
+				if i == k {
+					delete(n, i)
+				}
+			}
+		}
 	}
 }
 
@@ -184,7 +225,22 @@ func (r *RequestReconciler) refresh() {
 
 // SetupWithManager sets up the controller with the Manager.
 func (r *RequestReconciler) SetupWithManager(mgr ctrl.Manager) error {
+	f := func(o client.Object) []reconcile.Request {
+		requests := []reconcile.Request{}
+
+		if n, ok := r.endpointsMap[o.GetNamespace()]; ok {
+			if s, ok := n[o.GetName()]; ok {
+				for _, t := range s {
+					requests = append(requests, reconcile.Request{NamespacedName: t})
+				}
+			}
+		}
+
+		return requests
+	}
+
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&egressproxyv1alpha1.Request{}).
+		Watches(&source.Kind{Type: &corev1.Endpoints{}}, handler.EnqueueRequestsFromMapFunc(f), builder.OnlyMetadata).
 		Complete(r)
 }
