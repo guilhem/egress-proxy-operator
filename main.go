@@ -109,9 +109,9 @@ func main() {
 	}
 
 	if err = (&controllers.RequestReconciler{
-		Client: mgr.GetClient(),
-		Scheme: mgr.GetScheme(),
-		Proxy:  proxy,
+		Client:      mgr.GetClient(),
+		Scheme:      mgr.GetScheme(),
+		ReqHandlers: proxy.ReqHandlers,
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "Request")
 		os.Exit(1)
