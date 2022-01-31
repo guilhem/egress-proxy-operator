@@ -57,12 +57,14 @@ func main() {
 	var enableLeaderElection bool
 	var probeAddr string
 	var proxyAddr string
+	var dryRun bool
 	flag.StringVar(&metricsAddr, "metrics-bind-address", ":8080", "The address the metric endpoint binds to.")
 	flag.StringVar(&probeAddr, "health-probe-bind-address", ":8081", "The address the probe endpoint binds to.")
 	flag.BoolVar(&enableLeaderElection, "leader-elect", false,
 		"Enable leader election for controller manager. "+
 			"Enabling this will ensure there is only one active controller manager.")
 	flag.StringVar(&proxyAddr, "proxy-address", ":1080", "The address the proxy will binds to.")
+	flag.BoolVar(&dryRun, "dry-run", false, "Enforce client dry-run")
 
 	opts := zap.Options{
 		Development: true,
@@ -74,9 +76,9 @@ func main() {
 
 	proxy := &goproxy.ProxyHttpServer{
 		Logger:        log.New(os.Stderr, "", log.LstdFlags),
-		ReqHandlers:   []goproxy.ReqHandler{},
-		RespHandlers:  []goproxy.RespHandler{},
-		HttpsHandlers: []goproxy.HttpsHandler{},
+		ReqHandlers:   &[]goproxy.ReqHandler{},
+		RespHandlers:  &[]goproxy.RespHandler{},
+		HttpsHandlers: &[]goproxy.HttpsHandler{},
 		NonproxyHandler: http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
 			http.Error(w, "This is a proxy server. Does not respond to non-proxy requests.", 500)
 		}),
@@ -102,6 +104,7 @@ func main() {
 		HealthProbeBindAddress: probeAddr,
 		LeaderElection:         enableLeaderElection,
 		LeaderElectionID:       "e8530e39.my.domain",
+		DryRunClient:           dryRun,
 	})
 	if err != nil {
 		setupLog.Error(err, "unable to start manager")

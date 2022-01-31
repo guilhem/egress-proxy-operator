@@ -14,6 +14,7 @@ spec:
     #     - /toto
     #   prefixes:
     #     - /api
+    sourceEndpoints: my-headless-service
   action:
-    # block: true
+    block: true
     reroute: "https://www.qwant.com"
