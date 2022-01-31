@@ -74,4 +74,4 @@ require (
 	sigs.k8s.io/yaml v1.3.0 // indirect
 )
 
-replace github.com/elazarl/goproxy => github.com/guilhem/goproxy v0.0.0-20210715213258-c25598659d73
+replace github.com/elazarl/goproxy => github.com/guilhem/goproxy v0.0.0-20220131162453-881d8411c11c

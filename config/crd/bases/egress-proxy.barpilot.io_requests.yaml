@@ -49,6 +49,8 @@ spec:
                     items:
                       type: string
                     type: array
+                  sourceEndpoints:
+                    type: string
                   urls:
                     properties:
                       are:

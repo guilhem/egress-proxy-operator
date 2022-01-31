@@ -38,7 +38,7 @@ type Condition struct {
 	DestinationHosts []string `json:"destinations,omitempty"`
 	Urls             URL      `json:"urls,omitempty"`
 
-	SourceEndpoints string `json:"SourceEndpointSlice,omitempty"`
+	SourceEndpoints string `json:"sourceEndpoints,omitempty"`
 }
 
 type URL struct {
