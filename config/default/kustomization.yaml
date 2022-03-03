@@ -11,6 +11,11 @@ namespace: egress-proxy-operator-system
 # field above.
 namePrefix: egress-proxy-operator-
 
+resources:
+- ../crd
+- ../rbac
+- ../manager
+
 # Labels to add to all resources and selectors.
 #commonLabels:
 #  someName: someValue
