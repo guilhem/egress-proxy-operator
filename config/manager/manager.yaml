@@ -29,6 +29,7 @@ spec:
         - /manager
         args:
         - --leader-elect
+        - --proxy-address=:8080
         image: controller:latest
         name: manager
         securityContext:
@@ -52,5 +53,7 @@ spec:
           requests:
             cpu: 100m
             memory: 20Mi
+      ports:
+        - containerPort: 8080
       serviceAccountName: controller-manager
       terminationGracePeriodSeconds: 10
