@@ -227,7 +227,7 @@ func (r *RequestReconciler) Remove(ctx context.Context, req *egressproxyv1alpha1
 
 func (r *RequestReconciler) refresh(ctx context.Context) {
 	log := log.FromContext(ctx)
-	var nReqHandlers []goproxy.ReqHandler
+	nReqHandlers := make([]goproxy.ReqHandler, 0, len(r.internalReqHandlers))
 
 	for _, i := range r.internalReqHandlers {
 		nReqHandlers = append(nReqHandlers, i)
