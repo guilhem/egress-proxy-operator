@@ -58,6 +58,8 @@ const Finalizer = "egress-proxy.barpilot.io/finalizer"
 //+kubebuilder:rbac:groups=egress-proxy.barpilot.io,resources=requests/status,verbs=get;update;patch
 //+kubebuilder:rbac:groups=egress-proxy.barpilot.io,resources=requests/finalizers,verbs=update
 
+//+kubebuilder:rbac:groups=core,resources=endpoints,verbs=get;list;watch
+
 func (r *RequestReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	log := log.FromContext(ctx)
 

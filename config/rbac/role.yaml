@@ -6,6 +6,14 @@ metadata:
   name: manager-role
 rules:
 - apiGroups:
+  - ""
+  resources:
+  - endpoints
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
   - egress-proxy.barpilot.io
   resources:
   - requests
