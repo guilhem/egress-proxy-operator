@@ -6,6 +6,7 @@ on:
       - master
   push:
     tags:
+      - 'v*'
     branches:
       - master
 
@@ -40,7 +41,7 @@ jobs:
         with:
           push: true
           tags: ${{ steps.meta.outputs.tags }}
-          # labels: ${{ steps.meta.outputs.labels }}
+          labels: ${{ steps.meta.outputs.labels }}
           cache-from: |
             type=gha
             type=registry,ref=${{ steps.meta.outputs.tags }}
