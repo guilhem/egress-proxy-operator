@@ -58,6 +58,7 @@ func main() {
 	var probeAddr string
 	var proxyAddr string
 	var dryRun bool
+	var verbose bool
 	flag.StringVar(&metricsAddr, "metrics-bind-address", ":8080", "The address the metric endpoint binds to.")
 	flag.StringVar(&probeAddr, "health-probe-bind-address", ":8081", "The address the probe endpoint binds to.")
 	flag.BoolVar(&enableLeaderElection, "leader-elect", false,
@@ -65,6 +66,7 @@ func main() {
 			"Enabling this will ensure there is only one active controller manager.")
 	flag.StringVar(&proxyAddr, "proxy-address", ":1080", "The address the proxy will binds to.")
 	flag.BoolVar(&dryRun, "dry-run", false, "Enforce client dry-run")
+	flag.BoolVar(&verbose, "verbose", false, "verbose logging")
 
 	opts := zap.Options{
 		Development: true,
@@ -83,7 +85,7 @@ func main() {
 			http.Error(w, "This is a proxy server. Does not respond to non-proxy requests.", 500)
 		}),
 		Tr:      &http.Transport{TLSClientConfig: tlsClientSkipVerify, Proxy: http.ProxyFromEnvironment},
-		Verbose: true,
+		Verbose: verbose,
 	}
 
 	// proxy.ConnectDial = netproxy.FromEnvironment().Dial
