@@ -103,7 +103,7 @@ func main() {
 		Port:                   9443,
 		HealthProbeBindAddress: probeAddr,
 		LeaderElection:         enableLeaderElection,
-		LeaderElectionID:       "e8530e39.my.domain",
+		LeaderElectionID:       "egress-proxy-operator.barpilot.io",
 		DryRunClient:           dryRun,
 	})
 	if err != nil {
