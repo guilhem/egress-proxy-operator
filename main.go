@@ -17,9 +17,9 @@ limitations under the License.
 package main
 
 import (
-	"crypto/tls"
+	"context"
 	"flag"
-	"log"
+	"net"
 	"net/http"
 	"os"
 
@@ -37,6 +37,7 @@ import (
 	"github.com/elazarl/goproxy"
 	egressproxyv1alpha1 "github.com/guilhem/egress-proxy-operator/api/v1alpha1"
 	"github.com/guilhem/egress-proxy-operator/controllers"
+	"github.com/guilhem/egress-proxy-operator/pkg/storage"
 	//+kubebuilder:scaffold:imports
 )
 
@@ -74,19 +75,37 @@ func main() {
 	opts.BindFlags(flag.CommandLine)
 	flag.Parse()
 
-	var tlsClientSkipVerify = &tls.Config{InsecureSkipVerify: true}
+	proxy := goproxy.NewProxyHttpServer()
 
-	proxy := &goproxy.ProxyHttpServer{
-		Logger:        log.New(os.Stderr, "", log.LstdFlags),
-		ReqHandlers:   &[]goproxy.ReqHandler{},
-		RespHandlers:  &[]goproxy.RespHandler{},
-		HttpsHandlers: &[]goproxy.HttpsHandler{},
-		NonproxyHandler: http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
-			http.Error(w, "This is a proxy server. Does not respond to non-proxy requests.", 500)
-		}),
-		Tr:      &http.Transport{TLSClientConfig: tlsClientSkipVerify, Proxy: http.ProxyFromEnvironment},
-		Verbose: verbose,
+	// proxy := &goproxy.ProxyHttpServer{
+	// 	Logger:        log.New(os.Stderr, "", log.LstdFlags),
+	// 	ReqHandlers:   &[]goproxy.ReqHandler{},
+	// 	RespHandlers:  &[]goproxy.RespHandler{},
+	// 	HttpsHandlers: &[]goproxy.HttpsHandler{},
+	// 	NonproxyHandler: http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+	// 		http.Error(w, "This is a proxy server. Does not respond to non-proxy requests.", 500)
+	// 	}),
+	// 	Tr:      &http.Transport{TLSClientConfig: tlsClientSkipVerify, Proxy: http.ProxyFromEnvironment},
+	// 	Verbose: verbose,
+	// }
+
+	proxy.CertStore = storage.NewOptimizedCertStore()
+
+	proxy.Tr.DialContext = func(ctx context.Context, network, addr string) (net.Conn, error) {
+		c, err := net.Dial(network, addr)
+		if err != nil {
+			return nil, err
+		}
+
+		if c, ok := c.(*net.TCPConn); ok {
+			if err := c.SetKeepAlive(true); err != nil {
+				return c, err
+			}
+		}
+		return c, nil
 	}
+
+	proxy.Verbose = true
 
 	// proxy.ConnectDial = netproxy.FromEnvironment().Dial
 	// log.Println("test")
