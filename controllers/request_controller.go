@@ -114,6 +114,7 @@ func (r *RequestReconciler) Add(ctx context.Context, req *egressproxyv1alpha1.Re
 	conds := make(map[string][]goproxy.ReqCondition)
 	for _, dst := range req.Spec.Condition.DestinationHosts {
 		conds["dst"] = append(conds["dst"], goproxy.DstHostIs(dst))
+		log.Info("Add condition", "dst", dst)
 	}
 
 	for _, rule := range req.Spec.Condition.Urls.Matches {
@@ -122,14 +123,17 @@ func (r *RequestReconciler) Add(ctx context.Context, req *egressproxyv1alpha1.Re
 			return err
 		}
 		conds["matches"] = append(conds["matches"], goproxy.ReqHostMatches(match))
+		log.Info("Add condition", "matches", rule)
 	}
 
 	for _, prefix := range req.Spec.Condition.Urls.Prefixes {
 		conds["prefixes"] = append(conds["prefixes"], goproxy.UrlHasPrefix(prefix))
+		log.Info("Add condition", "prefix", prefix)
 	}
 
 	for _, are := range req.Spec.Condition.Urls.Are {
 		conds["are"] = append(conds["are"], goproxy.UrlIs(are))
+		log.Info("Add condition", "are", are)
 	}
 
 	if req.Spec.Condition.SourceEndpoints != "" {
@@ -147,6 +151,7 @@ func (r *RequestReconciler) Add(ctx context.Context, req *egressproxyv1alpha1.Re
 		}
 
 		conds["ip"] = append(conds["ip"], goproxy.SrcIpIs(ips...))
+		log.Info("Add condition", "ips", ips)
 
 		// init endpointsMap if needed
 		if _, ok := r.endpointsMap[req.Namespace]; !ok {
@@ -161,6 +166,7 @@ func (r *RequestReconciler) Add(ctx context.Context, req *egressproxyv1alpha1.Re
 	}
 
 	reqhandler := goproxy.FuncReqHandler(func(r *http.Request, ctx *goproxy.ProxyCtx) (*http.Request, *http.Response) {
+		log.Info("handle request", "url", r.URL.String())
 		for _, group := range conds {
 			trigger := false
 			for _, cond := range group {
