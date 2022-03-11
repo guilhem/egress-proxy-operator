@@ -10,4 +10,8 @@ spec:
     control-plane: controller-manager
   ports:
   - port: 1080
+    name: socks
+    targetPort: 8080
+  - port: 8080
+    name: alternatehttp
     targetPort: 8080
