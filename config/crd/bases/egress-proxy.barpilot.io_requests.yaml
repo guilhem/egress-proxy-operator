@@ -42,6 +42,8 @@ spec:
                   reroute:
                     type: string
                 type: object
+              caSecret:
+                type: string
               condition:
                 properties:
                   destinations:
