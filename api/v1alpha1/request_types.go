@@ -27,6 +27,7 @@ import (
 type RequestSpec struct {
 	Condition Condition `json:"condition,omitempty"`
 	Action    Action    `json:"action,omitempty"`
+	CASecret  string    `json:"caSecret,omitempty"`
 }
 
 type Action struct {
